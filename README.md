@@ -52,3 +52,4 @@ The game is built using Java Swing for the GUI, and it includes animations and b
 This project demonstrates the use of Java for game development and provides a fun and interactive Pacman game. It helps in understanding core programming concepts such as object-oriented design, event handling, and game loops.
 
 "# pacman" 
+"# pacman_game" 
