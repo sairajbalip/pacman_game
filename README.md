@@ -18,7 +18,6 @@ This project is a Java-based implementation of the classic Pacman game. The game
 - A scoring system that increases when Pacman eats food.
 - A life system where Pacman loses lives when caught by ghosts.
 - Game over and reset functionality.
-- power-ups to allow Pacman to eat ghosts.
 
 The game is built using Java Swing for the GUI, and it includes animations and basic game physics to create an engaging experience.
 
