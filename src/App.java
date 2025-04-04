@@ -24,6 +24,6 @@ public static void main(String args[]) {
 	pacmangame pacman = new pacmangame();
 	frame.add(pacman);
 	pacman.requestFocus();
-	frame.pack();//nigga
+	frame.pack();
 }
 }
