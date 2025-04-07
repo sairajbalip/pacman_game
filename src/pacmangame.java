@@ -274,6 +274,54 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 				break;
 			}
 		}
+		
+		
+		Block foodeaten = null;
+		for(Block food : foods) {
+			if(collision(pacman,food)) {
+				foodeaten = food;
+				score +=5;
+			}
+		}
+		foods.remove(foodeaten);
+		Block powerfoodeaten = null;
+		for(Block Powerfood : powerfood) {
+			if(collision(pacman,Powerfood)) {
+				powerfoodeaten = Powerfood;
+				score +=20;
+			}
+		}
+		powerfood.remove(powerfoodeaten);
+		
+		if(pacman.x >= columns*tilesize) {
+			pacman.teleport1(pacman.x);
+		}
+		else if(pacman.x <= -pacman.weidth) {
+			pacman.teleport2(pacman.x);
+		}
+		
+		if(foods.isEmpty()) {
+			gameloop.stop();
+		    loadmap();
+			resetpositions();
+			
+		}
+	}
+	private boolean frozen = false;
+    	private long freezeEndTime;
+
+		public void freezeFor(int milliseconds) {
+			frozen = true;
+			freezeEndTime = System.currentTimeMillis() + milliseconds;
+		}
+	public void update() {
+        if (frozen) {
+            if (System.currentTimeMillis() > freezeEndTime) {
+                frozen = false;
+            } else {
+                return; // Skip movement while frozen
+            }
+        }
 		for(Block Ghost : ghosts) {
 			if(collision(pacman,Ghost)) {
 				lives -=1;
@@ -350,30 +398,16 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 			}
 			
 		}
-		
-		Block foodeaten = null;
-		for(Block food : foods) {
-			if(collision(pacman,food)) {
-				foodeaten = food;
-				score +=5;
-			}
-		}
-		foods.remove(foodeaten);
-		
-		if(pacman.x >= columns*tilesize) {
-			pacman.teleport1(pacman.x);
-		}
-		else if(pacman.x <= -pacman.weidth) {
-			pacman.teleport2(pacman.x);
-		}
-		
-		if(foods.isEmpty()) {
-			gameloop.stop();
-		    loadmap();
-			resetpositions();
-			
-		}
-	}
+
+        
+    }
+
+
+
+
+
+
+
 	private void loadHighScore() {
     try (BufferedReader br = new BufferedReader(new FileReader("highscore.txt"))) {
         String line = br.readLine();
@@ -424,6 +458,7 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 		move();// we call it for every gameloop timer
 		// we first move then redraw the object
 		repaint();
+		update();
 		if(gameover) {
 			gameloop.stop();
 		}
