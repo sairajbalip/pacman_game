@@ -1,8 +1,13 @@
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.HashSet;
 import java.util.Random;
+import javax.swing.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class pacmangame extends JPanel implements ActionListener, KeyListener {
 	
@@ -82,11 +87,13 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 	HashSet<Block> walls; // hashset for better performance although we can use arraylist
 	HashSet<Block> foods;
 	HashSet<Block> ghosts;
+	HashSet<Block> powerfood;
 	Block pacman;
 	
 	Timer gameloop;
 	char[] directions = {'U','L','R','D'};
 	int score =0;
+	int highscore = 0;
 	int lives = 3;
 	boolean gameover = false;
 	
@@ -95,11 +102,11 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
     //Ghosts: b = blue, o = orange, p = pink, r = red
 	 private String[] tileMap = {
 		        "XXXXXXXXXXXXXXXXXXX",
-		        "X        X        X",
+		        "X        X     f  X",
 		        "X XX XXX X XXX XX X",
 		        "X                 X",
 		        "X XX X XXXXX X XX X",
-		        "X    X       X    X",
+		        "Xf   X       X    X",
 		        "XXXX XXXX XXXX XXXX",
 		        "OOOX X       X XOOO",
 		        "XXXX X XXrXX X XXXX",
@@ -109,11 +116,11 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 		        "XXXX X XXXXX X XXXX",
 		        "X        X        X",
 		        "X XX XXX X XXX XX X",
-		        "X  X     P     X  X",
+		        "X  X     P     Xf X",
 		        "XX X X XXXXX X X XX",
 		        "X    X   X   X    X",
 		        "X XXXXXX X XXXXXX X",
-		        "X                 X",
+		        "X  f              X",
 		        "XXXXXXXXXXXXXXXXXXX" 
 		    };
 	
@@ -135,6 +142,7 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 	private Image orangeghostimage;
 	private Image pinkghostimage;
 	
+
 	
 	Random random = new Random();
 	pacmangame(){
@@ -155,6 +163,7 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 		orangeghostimage = new ImageIcon(getClass().getResource("./orangeGhost.png")).getImage();
 		
 		loadmap();
+		loadHighScore();
 		for(Block Ghost : ghosts) {
 			char newdirection = directions[random.nextInt(4)];
 			Ghost.updatedirection(newdirection);
@@ -168,7 +177,7 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 		walls = new HashSet<Block>();
 		foods = new HashSet<Block>();
 		ghosts = new HashSet<Block>();
-		
+		powerfood = new HashSet<Block>();
 		
 		for(int r = 0; r < rows; r++) {
 			for(int c = 0; c < columns; c++) {
@@ -204,6 +213,10 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 				else if(tileMapchar == ' ') {
 					Block food = new Block(null, x + 14, y + 14, 4, 4);//we want to create a food pellet of size 4x4 pixels 
 					foods.add(food);
+				}
+				else if(tileMapchar == 'f') {
+					Block Powerfood = new Block(null, x + 9, y + 9, 14, 14);
+					powerfood.add(Powerfood);
 				}// no point in writing the code for 'O' BLOCK
 			}
 		}
@@ -216,6 +229,7 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 	
 	
 	public void draw(Graphics g) {
+		int temp = highscore;
 		g.drawImage(pacman.image, pacman.x, pacman.y, pacman.weidth, pacman.height, null);
 		
 		for(Block Ghost : ghosts) {
@@ -225,16 +239,26 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 			g.drawImage(wall.image, wall.x, wall.y, wall.weidth, wall.height, null);
 		}
 		
+		
 		g.setColor(Color.white);
 		for(Block food : foods) {
 			g.fillRect( food.x, food.y, food.weidth, food.height);
 		}
+		for(Block Powerfood : powerfood) {
+			g.fillRect( Powerfood.x, Powerfood.y, Powerfood.weidth, Powerfood.height);
+		}
 		g.setFont(new Font("Ariel", Font.PLAIN, 18));
 		if(gameover) {
-			g.drawString("GAME OVER!  Final score:" + String.valueOf(score), tilesize/2,tilesize/2);
+		    checkAndUpdateHighScore(score);
+			if(highscore > temp){
+				g.drawString("GAME OVER!  Final score:" + String.valueOf(score) + " NEW HIGHSCORE:" + String.valueOf(highscore) , tilesize/2,tilesize/2);
+			}
+			else{
+				g.drawString("GAME OVER!  Final score:" + String.valueOf(score) + " HIGHSCORE:" + String.valueOf(highscore), tilesize/2,tilesize/2);
+			}
 		}
 		else {
-			g.drawString("x" + String.valueOf(lives) + " Score :" + String.valueOf(score), tilesize/2, tilesize/2);
+			g.drawString("x" + String.valueOf(lives) + " Score :" + String.valueOf(score) + " Highscore" + String.valueOf(highscore) , tilesize/2, tilesize/2);
 		}
 	}
 	// to move the pacman
@@ -257,6 +281,7 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 				if(lives == 0) {
 					gameover = true;
 					return;
+				
 				}
 				resetpositions();
 			}
@@ -349,6 +374,30 @@ public class pacmangame extends JPanel implements ActionListener, KeyListener {
 			
 		}
 	}
+	private void loadHighScore() {
+    try (BufferedReader br = new BufferedReader(new FileReader("highscore.txt"))) {
+        String line = br.readLine();
+        if (line != null) {
+            highscore = Integer.parseInt(line);
+        }
+    } catch (IOException e) {
+        System.out.println("High score file not found. Starting with high score of 0.");
+    }
+}
+	private void checkAndUpdateHighScore(int currentScore) {
+		if (currentScore > highscore) {
+			highscore = currentScore;
+			saveHighScore();
+		}
+	}
+	private void saveHighScore() {
+    try (BufferedWriter bw = new BufferedWriter(new FileWriter("highscore.txt"))) {
+        bw.write(String.valueOf(highscore));
+    } catch (IOException e) {
+        System.out.println("Error saving high score.");
+    }
+}
+
 	
 	public void resetpositions(){
 		pacman.reset();
